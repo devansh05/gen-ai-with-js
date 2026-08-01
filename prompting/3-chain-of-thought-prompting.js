@@ -6,6 +6,10 @@
 // Here we use roles to manage context.
 // We encourage overthinking in Ai Agent.
 
+// WE cant be adding assistant context to ai over and over again.
+// Hence we use a loop to push all the response of previous step using assistant.
+// This is called LOOP ENGINEERING
+
 import OpenAI from "openai";
 import "dotenv/config";
 
@@ -46,8 +50,7 @@ The pipline:
   - "USER": What is 2 + 30 - 5 * 15 / 3?
   OUTPUT:
   - "INITAL": "The user wants me to solve a maths equation"
-  - "THINK": "I will use the BODMAS formula as that is the best and universal standard to solve such maths equations
-  now as per BODMAS we will implement multiplication on 5 and 15"
+  - "THINK": "I will use the BODMAS formula as that is the best and universal standard to solve such maths equations now as per BODMAS we will implement multiplication on 5 and 15"
   - "EXECUTE": "execution the thought and planned solution - first multiply 5 * 15 which is 75"
   - "ANALYSE": "Yes, the BODMAS is correct and now equation is 2 + 30 - 75 / 3"
   - "THINK": "Now as per rule we should perform divide on 75 and 3"
@@ -66,64 +69,41 @@ The pipline:
 `;
 
 const executeAiAgent = async (prompt = "") => {
-  const pd = await client.chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      {
-        role: "system",
-        content: SYSTEM_CONTEXT,
-      },
-      {
-        role: "user",
-        content: `${prompt}`,
-      },
-      {
-        // assistant is a role that is used to store the context of previous executions
-        //As the models are stateless hence we need to provide the output of first step ourselves
-        role: "assistant",
-        content: JSON.stringify({
-          step: "INITIAL",
-          text: "The user wants me to solve for x in the given equation.",
-        }),
-      },
-      {
-        //As the models are stateless hence we need to provide the output of first step ourselves
-        role: "assistant",
-        content: JSON.stringify({
-          step: "THINK",
-          text: "To isolate x, we need to subtract 4 from both sides of the equation x + 4 = 15.",
-        }),
-      },
-      {
-        //As the models are stateless hence we need to provide the output of first step ourselves
-        role: "assistant",
-        content: JSON.stringify({
-          step: "EXECUTE",
-          text: "Subtracting 4 from both sides, the equation becomes x + 4 - 4 = 15 - 4.",
-        }),
-      },
-      {
-        //As the models are stateless hence we need to provide the output of first step ourselves
-        role: "assistant",
-        content: JSON.stringify({
-          step: "ANALYSE",
-          text: "After simplification, the equation is reduced to x = 11.",
-        }),
-      },
-      {
-        //As the models are stateless hence we need to provide the output of first step ourselves
-        //This is the output step finally. After the executions from chain of thoughts.
-        role: "assistant",
-        content: JSON.stringify({
-          step: "OUTPUT",
-          text: "The value of x is 11.",
-        }),
-      },
-    ],
-  });
+  const systemRole = {
+    role: "system",
+    content: SYSTEM_CONTEXT,
+  };
+  const userRole = {
+    role: "user",
+    content: `${prompt}`,
+  };
 
-  console.log("Answer from agent:\n\n", pd.choices[0].message.content, "\n\n");
+  const executionArray = [systemRole, userRole];
+
+  while (true) {
+    const pd = await client.chat.completions.create({
+      model: "gpt-4o",
+      messages: executionArray,
+    });
+
+    const agentResponse = JSON.parse(pd.choices[0].message.content);
+    const assistantRole = {
+      role: "assistant",
+      content: JSON.stringify(agentResponse),
+    };
+
+    console.log(
+      `🤖 WORKING...\nstep: ${agentResponse.step}\ntext: ${agentResponse.text}`,
+    );
+
+    executionArray.push(assistantRole);
+
+    if (agentResponse.step === "OUTPUT") {
+      const output = JSON.parse(executionArray.slice(-1)[0].content);
+      console.log(`🟡 LOG - : OUTPUT `, output.text);
+      break;
+    }
+  }
 };
 
-// executeAiAgent("solve for x in : 4x - 3(x - 2) = 21");
-executeAiAgent("solve for x in : x+4 = 15");
+executeAiAgent("What is dual in SQL");
