@@ -78,14 +78,13 @@ const executeAiAgent = async (prompt = "") => {
     content: `${prompt}`,
   };
 
-  const executionArray = [systemRole, userRole];
+  const executionArray = [userRole, systemRole];
 
   while (true) {
     const pd = await client.chat.completions.create({
       model: "gpt-4o",
       messages: executionArray,
     });
-
     const agentResponse = JSON.parse(pd.choices[0].message.content);
     const assistantRole = {
       role: "assistant",
@@ -97,6 +96,12 @@ const executeAiAgent = async (prompt = "") => {
     );
 
     executionArray.push(assistantRole);
+
+    // if (agentResponse.step === "THINK") {
+    // TODO: Make a Claude call here to verify your result is they are correct approach to follow
+    // This is multi agent loop. Actual work done by GPT and verfied by Claude. More better results.
+    // MESSAGE.db.push({content from claude})
+    // }
 
     if (agentResponse.step === "OUTPUT") {
       const output = JSON.parse(executionArray.slice(-1)[0].content);
