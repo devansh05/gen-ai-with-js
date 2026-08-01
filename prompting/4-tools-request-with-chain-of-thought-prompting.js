@@ -10,18 +10,24 @@
 // Hence we use a loop to push all the response of previous step using assistant.
 // This is called LOOP ENGINEERING
 
-
-// TOOLS_REQUEST WITH CHAIN OF THOUGH PROMPTING
-// We can run our functions in our local machines or on our servers inside the
-// agent workflows and synchronize them with the execution of agents on openai servers.
-
+// TOOL_REQUEST : To call and use your local functions or tools with the agent executions, your agent running
+// on claude servers can use these local tools you provide to complete their executions. This is done using
+// tool request.
 
 import OpenAI from "openai";
 import "dotenv/config";
+import axios from "axios";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+//TOOLS
+async function getWeatherData(palce) {
+  const url = `https://wttr.in/${palce.toLowerCase()}?format=%C+%t`;
+  const response = await axios.get(url, { responseType: "text" });
+  return JSON.stringify({ palce, weatherInfo: response.data });
+}
 
 // Setting inital context for system role
 // Then add a pipeline, rules, example and output formats
@@ -30,7 +36,7 @@ and then you need to breakdown the problem into multiple sub problems or small s
 before reaching the final result. Always breakdown the user intentions and how to solve that problem,
 and then solve it step by step.
 
-Then we will follow a pipleline of "INITIAL", "THINK", "EXECUTE", "ANALYSE" and "OUTPUT" pipeline.
+Then we will follow a pipleline of "INITIAL", "THINK", "TOOL_REQUEST", "EXECUTE", "ANALYSE" and "OUTPUT" pipeline.
 
 The pipline:
   - "INITIAL" When user gives an input we'll have an initial thought process on what user is trying to do.
@@ -41,15 +47,24 @@ The pipline:
   - "ANALYSE" here we'll analyse the solution and its result from Execution step.
   And also verify if the output is correct.
   - "THINK" now we can go back in think mode and check if any problem remains and think for best efficient ways to tackle that.
+  - "TOOL_REQUEST": use this for calling or requesting a tool. The format of output would be
+    { "step": "TOOL_REQUEST", functionName: "getWeatherData", "input": "Goa" }
   - "EXECUTE" now we execute the solution thought above.
   - "ANALYSE" here we will analyse the result of execution step
   - "OUTPUT" here we verify if the correct and expected output is deduced, check if we can end the pipeline,
   and give final output to user.
 
+  Available tools:
+  - "getWeatherData": getWeatherData(palce: string): Returns the realtime weather information of city.
   Rules:
   - Always output one step at a time and wait for other or previous step before proceeding.
   - Always maintain sequence of pipeline as given in example
   - Always follow a JSON output format strictly.
+  - Return ONLY valid JSON.
+  - Do NOT wrap it inside Markdown.
+  - Do NOT explain anything.
+  - Do NOT add extra text.
+  - Your response must start with { and end with }.
 
 
   Example:
@@ -70,8 +85,21 @@ The pipline:
   - "ANALYSE": "Great, now we have the final answer after the above execution that is 7"
   - "OUTPUT": "The final output is "7"
 
+  Example:
+  - "USER" what is weather of Goa?
+  OUTPUT:
+   - "INITAL": "The user wants me to fetch weather information of Goa",
+   - "THINK": "From the tools I can see we have a tool named getWeatherData which can be called"
+   - "ANALYSE": "We are going right we can call getWeatherData with "GOA" as input"
+   - "TOOL_REQUEST": { "functionName": "getWeatherData", "input": "goa" }
+   - "TOOL_OUTPUT": {"step":"TOOL_OUTPUT", "content":"{\"place\":\"Delhi\",\"weatherInfo\":\"Sunny +34°C\"}"
+}
+   - "THINK": "We got the weather info"
+   - "OUTPUT": "The weather of Goa is sunny with some 30 degree c. Its goona be Hottttttt"
+
+
   Output Format:
-  {"step": "INITIAL" | "THINK" | "EXECUTE" | "ANALYSE" | "OUTPUT", "text": <The actual text> }
+    { "step": "INITAL" | "THINK" | "EXECUTE" | "TOOL_REQUEST |"ANALYSE" | "OUTPUT", "text": "<The Actual Text>", "functionName": "<NAME OF FUNCTION>", "input": "INPUT PARAMS of Function" }
 `;
 
 const executeAiAgent = async (prompt = "") => {
@@ -109,6 +137,37 @@ const executeAiAgent = async (prompt = "") => {
     // MESSAGE.db.push({content from claude})
     // }
 
+    if (agentResponse.step === "TOOL_REQUEST") {
+      const output = JSON.parse(executionArray.slice(-1)[0].content);
+      const { functionName, input } = output;
+      switch (functionName) {
+        case "getWeatherData":
+          {
+            const toolResult = await getWeatherData(input);
+            console.log(
+              `🛠️ Tool used: ${functionName}(${input}) =>`,
+              toolResult,
+            );
+            const toolContentObj = JSON.stringify({
+              step: "TOOL_OUTPUT",
+              content: toolResult,
+            });
+
+            executionArray.push({
+              role: "developer",
+              content: JSON.stringify({
+                step: "TOOL_OUTPUT",
+                content: toolResult,
+              }),
+            });
+            continue;
+          }
+          break;
+      }
+      console.log(`🟡 LOG - : OUTPUT `, output.text);
+      break;
+    }
+
     if (agentResponse.step === "OUTPUT") {
       const output = JSON.parse(executionArray.slice(-1)[0].content);
       console.log(`🟡 LOG - : OUTPUT `, output.text);
@@ -117,4 +176,6 @@ const executeAiAgent = async (prompt = "") => {
   }
 };
 
-executeAiAgent("What is dual in SQL");
+executeAiAgent("What is the weather in Bengaluru ?");
+
+// console.log(`🟡 LOG - : `, await getWeatherData("Berlin"));
