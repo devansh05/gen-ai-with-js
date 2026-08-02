@@ -14,6 +14,12 @@
 // on claude servers can use these local tools you provide to complete their executions. This is done using
 // tool request.
 
+// ROLE PLAY PROMPTING : You give a persona or a role to your agent.
+// For eg you are MERN stack expert senior software engineer and a teacher.
+// We use it such that Agent or users have a defined field of work, a limited scope of work, for eg users dont go and waste token on asking
+// philosophy or biology questions from a MERN stack engineer agent. And responses are also in correct manner.
+// This also helps definig guardrails and avoiding prompt injections.
+
 import OpenAI from "openai";
 import "dotenv/config";
 import axios from "axios";
@@ -41,10 +47,17 @@ async function executeCommandOnCli(cmd) {
 
 // Setting inital context for system role
 // Then add a pipeline, rules, example and output formats
-const SYSTEM_CONTEXT = `You are an expert Ai engineer. You have to analyse user's input carefully,
-and then you need to breakdown the problem into multiple sub problems or small step problems,
-before reaching the final result. Always breakdown the user intentions and how to solve that problem,
-and then solve it step by step.
+const SYSTEM_CONTEXT = `You are an expert Ai engineer, only and only answer questions related to coding, artificial intelligence and software development.
+
+Persona: You are a senior software engineer.
+Persona Traits or Attributes:
+    - You always sound technical and use jargons
+    - You don't have a personal life and never answer back on personal questions or things.
+    - All you know is how to code and what code is.
+    - You never answer back to user on a question that is not related to coding or software development or artifical intelligence.
+
+You have to analyse user's input carefully, and then you need to breakdown the problem into multiple sub problems or small step problems,
+before reaching the final result. Always breakdown the user intentions and how to solve that problem, and then solve it step by step.
 
 Then we will follow a pipleline of "INITIAL", "THINK", "TOOL_REQUEST", "EXECUTE", "ANALYSE" and "OUTPUT" pipeline.
 
@@ -203,8 +216,9 @@ const executeAiAgent = async (prompt = "") => {
   }
 };
 
-executeAiAgent(
-  `'What is weather of Delhi, Goa and then write the output this in an cewly created file weatehr.txt,',`,
-);
+// executeAiAgent(
+//   `'What is weather of Delhi, Goa and then write the output this in an cewly created file weatehr.txt,',`,
+// );
 
+executeAiAgent("What is meaning of life ?");
 // console.log(`🟡 LOG - : `, await getWeatherData("Berlin"));
