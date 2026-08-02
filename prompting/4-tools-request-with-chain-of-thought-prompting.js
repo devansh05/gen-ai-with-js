@@ -17,6 +17,7 @@
 import OpenAI from "openai";
 import "dotenv/config";
 import axios from "axios";
+import { exec } from "child_process";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -27,6 +28,15 @@ async function getWeatherData(palce) {
   const url = `https://wttr.in/${palce.toLowerCase()}?format=%C+%t`;
   const response = await axios.get(url, { responseType: "text" });
   return JSON.stringify({ palce, weatherInfo: response.data });
+}
+
+async function executeCommandOnCli(cmd) {
+  return new Promise((res, rej) => {
+    exec(cmd, (err, output) => {
+      if (err) return res(`Received an error running the command ${err}`);
+      else return res(output);
+    });
+  });
 }
 
 // Setting inital context for system role
@@ -56,6 +66,8 @@ The pipline:
 
   Available tools:
   - "getWeatherData": getWeatherData(palce: string): Returns the realtime weather information of city.
+  - "executeCommandOnCli": executeCommandOnCli(command: string): Executes the command on user's device and returns output from stdout.
+  
   Rules:
   - Always output one step at a time and wait for other or previous step before proceeding.
   - Always maintain sequence of pipeline as given in example
@@ -92,8 +104,7 @@ The pipline:
    - "THINK": "From the tools I can see we have a tool named getWeatherData which can be called"
    - "ANALYSE": "We are going right we can call getWeatherData with "GOA" as input"
    - "TOOL_REQUEST": { "functionName": "getWeatherData", "input": "goa" }
-   - "TOOL_OUTPUT": {"step":"TOOL_OUTPUT", "content":"{\"place\":\"Delhi\",\"weatherInfo\":\"Sunny +34°C\"}"
-}
+   - "TOOL_OUTPUT": {"step":"TOOL_OUTPUT", "content":"{\"place\":\"Delhi\",\"weatherInfo\":\"Sunny +34°C\"}"}
    - "THINK": "We got the weather info"
    - "OUTPUT": "The weather of Goa is sunny with some 30 degree c. Its goona be Hottttttt"
 
@@ -141,6 +152,22 @@ const executeAiAgent = async (prompt = "") => {
       const output = JSON.parse(executionArray.slice(-1)[0].content);
       const { functionName, input } = output;
       switch (functionName) {
+        case "executeCommandOnCli": {
+          const toolResult = await executeCommandOnCli(input);
+          console.log(`🛠️ Tool used: ${functionName}(${input}) =>`, toolResult);
+          const toolContentObj = JSON.stringify({
+            step: "TOOL_OUTPUT",
+            content: toolResult,
+          });
+          executionArray.push({
+            role: "developer",
+            content: JSON.stringify({
+              step: "TOOL_OUTPUT",
+              content: toolResult,
+            }),
+          });
+          continue;
+        }
         case "getWeatherData":
           {
             const toolResult = await getWeatherData(input);
@@ -176,6 +203,8 @@ const executeAiAgent = async (prompt = "") => {
   }
 };
 
-executeAiAgent("What is the weather in Bengaluru ?");
+executeAiAgent(
+  `'What is weather of Delhi, Goa and then write the output this on a beautifuyll webpage. create a new folder in this same folder prompting, saying weather and create all HTML CSS file there and then run this on my browser,',`,
+);
 
 // console.log(`🟡 LOG - : `, await getWeatherData("Berlin"));
