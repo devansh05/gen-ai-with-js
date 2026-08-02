@@ -127,7 +127,7 @@ const executeAiAgent = async (prompt = "") => {
 
   while (true) {
     const pd = await client.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-5-codex",
       messages: executionArray,
     });
     const agentResponse = JSON.parse(pd.choices[0].message.content);
