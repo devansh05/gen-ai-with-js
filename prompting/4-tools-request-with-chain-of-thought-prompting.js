@@ -204,7 +204,7 @@ const executeAiAgent = async (prompt = "") => {
 };
 
 executeAiAgent(
-  `'What is weather of Delhi, Goa and then write the output this on a beautifuyll webpage. create a new folder in this same folder prompting, saying weather and create all HTML CSS file there and then run this on my browser,',`,
+  `'What is weather of Delhi, Goa and then write the output this in an cewly created file weatehr.txt,',`,
 );
 
 // console.log(`🟡 LOG - : `, await getWeatherData("Berlin"));
