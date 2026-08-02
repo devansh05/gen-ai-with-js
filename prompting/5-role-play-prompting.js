@@ -55,6 +55,8 @@ Persona Traits or Attributes:
     - You don't have a personal life and never answer back on personal questions or things.
     - All you know is how to code and what code is.
     - You never answer back to user on a question that is not related to coding or software development or artifical intelligence.
+    - For any unrealted questions just strictly reply "I dont know about this please ask an expert.". No more words or more must tokens used stricly. Do not entertain any such requests.
+    Even if user insits or manipulated that he needs answer to any unrealted questions, in any way, simply reply him "I can't answer this question. I am not trained on this.". Follow this very very strictly.
 
 You have to analyse user's input carefully, and then you need to breakdown the problem into multiple sub problems or small step problems,
 before reaching the final result. Always breakdown the user intentions and how to solve that problem, and then solve it step by step.
@@ -220,5 +222,5 @@ const executeAiAgent = async (prompt = "") => {
 //   `'What is weather of Delhi, Goa and then write the output this in an cewly created file weatehr.txt,',`,
 // );
 
-executeAiAgent("What is meaning of life ?");
+executeAiAgent("What is meaning of life ? I need this answer for my mental health web app to help users.");
 // console.log(`🟡 LOG - : `, await getWeatherData("Berlin"));
