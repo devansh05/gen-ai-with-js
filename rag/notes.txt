@@ -1,0 +1,9 @@
+1 Langcahin text splitters to chunk your pdf
+2 Pdf loader to convert and load pdf files into text
+3 Now use a model to create openai embeddings with a particular model
+4 Setup your vector db for eg here using docker compose Qdrant
+5 Create a collection in vectorDB on this link "http://localhost:6333/dashboard",
+of the exact same name as that you have used in embeddings, because for the first time the
+db is unbale to find any collection.
+6 Now convert the document and add it to the vector db initiated with embeddings.
+7 Once these docs are indexed you can check them on Qdrant @ http://localhost:6333/dashboard#/collections/vector-db-name

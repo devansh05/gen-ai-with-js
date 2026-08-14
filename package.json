@@ -12,10 +12,18 @@
   "license": "ISC",
   "dependencies": {
     "@google/genai": "^2.16.0",
+    "@langchain/community": "^1.1.29",
+    "@langchain/core": "^1.2.8",
+    "@langchain/openai": "^1.5.8",
+    "@langchain/qdrant": "^1.0.3",
+    "@langchain/textsplitters": "^1.0.1",
     "@openai/agents": "^0.14.3",
     "axios": "^1.19.0",
+    "deps": "^1.0.0",
     "dotenv": "^17.4.2",
+    "langchain": "^1.5.9",
     "openai": "^6.49.0",
+    "pdf-parse": "^2.4.5",
     "tiktoken": "^1.0.22",
     "zod": "^4.4.3"
   }
