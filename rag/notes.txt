@@ -1,9 +1,18 @@
+INDEXING:
 1 Langcahin text splitters to chunk your pdf
 2 Pdf loader to convert and load pdf files into text
-3 Now use a model to create openai embeddings with a particular model
-4 Setup your vector db for eg here using docker compose Qdrant
+3 Now use openai llm model to create openai embeddings with a particular model
+4 Setup your vector store and a vectorDB inside it for eg here using docker compose Qdrant
 5 Create a collection in vectorDB on this link "http://localhost:6333/dashboard",
 of the exact same name as that you have used in embeddings, because for the first time the
 db is unbale to find any collection.
 6 Now convert the document and add it to the vector db initiated with embeddings.
 7 Once these docs are indexed you can check them on Qdrant @ http://localhost:6333/dashboard#/collections/vector-db-name
+
+
+QUERYING:
+1. User query is text then we dont need to load or convert anything.
+2. Now we will initiate the embeddings for that model.
+3. Now we will setup the Vector Store for the same db in INDEXING.
+4. Now we will provide user query to vector reteriver and get all the db results.
+5. Once we have the resutls we can setup another agent to verify and manipulate the results.
