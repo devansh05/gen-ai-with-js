@@ -1,32 +1,36 @@
 import { Agent, run, tool } from "@openai/agents";
 import { z } from "zod";
 import "dotenv/config";
-import { RECOMMENDED_PROMPT_PREFIX } from '@openai/agents-core/extensions';
+import { RECOMMENDED_PROMPT_PREFIX } from "@openai/agents-core/extensions";
+import fs from "node:fs/promises";
+
+const refundsFile = new URL("./refunds.txt", import.meta.url);
 
 // Refund Agent
-const processRefund = tool({
+const processRefundTool = tool({
   name: "process_refund",
   description: `This tool processes the refund for a customer`,
   parameters: z.object({
     customerId: z.string().describe("id of the customer"),
     reason: z.string().describe("reason for refund"),
   }),
-  execute: async function ({ customerId, reason }) {
+  async execute({ customerId, reason }) {
     await fs.appendFile(
-      `./refunds.txt`,
-      `Refund for Customer having ID ${customerId} for ${reason}`,
-      "utf-8",
+      refundsFile,
+      `\nRefund for Customer having ID ${customerId} for ${reason}`,
+      "utf8",
     );
-    return { refundIssued: true };
+    return { refundIssued: true, customerId };
   },
 });
 
 const refundAgent = new Agent({
   name: "Refund Agent",
-  instructions: "You are an expert in issuing refunds to customers.",
-  model: "gpt-5.6-luna",
-  tools: [processRefund],
-  // apiKey: process.env.OPENAI_API_KEY,
+  instructions:
+    "You are an expert in understanding the user query and issuing refunds to customers.",
+  model: "gpt-6-luna",
+  tools: [processRefundTool],
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 // Sales Agent
@@ -63,13 +67,12 @@ const salesAgent = new Agent({
 const receptionAgent = new Agent({
   name: "Reception Agent",
   instructions: `
-  ${RECOMMENDED_PROMPT_PREFIX}
   You are the customer facing agent expert in understanding what customer needs
-  and then route them or handoff them to the right agent`,
+  and then route them or handoff them to the correct agent`,
   handoffDescription: `You have two agents available:
     - salesAgent: Expert in handling queries like all plans and pricing available.
     Good for new customers.
-    - refundAgent: Expert in handling user queries for existing customers and
+    - refundAgent: Expert in handling user queries related to refunds for existing customers and
     issue refunds and help them
   `,
   handoffs: [salesAgent, refundAgent],
@@ -78,9 +81,10 @@ const receptionAgent = new Agent({
 async function main(query = "") {
   const result = await run(receptionAgent, query);
   console.log(`Result`, result.finalOutput);
-  console.log(`History`, result.history);
+  // console.log(`History`, result.history);
 }
 
 main(
-  `Hi There, I am customer having id cust_234 and I want to have a refund request as I am facing slow speed internet issues.`,
+  `Hi There, I am customer having id cust_234 and
+  I want to have a refund request as I am facing slow speed internet issues.`,
 );
