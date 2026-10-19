@@ -1,0 +1,20 @@
+{
+    "servers": {
+        "stock-analyser": {
+            "type": "stdio",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "/Users/devansh/Documents/projects/gen-ai-js/mcp"
+            ]
+        },
+        "firecrawl": {
+            "type": "http",
+            "url": "https://mcp.firecrawl.dev/v2/mcp",
+            "headers": {
+                "Authorization": "Bearer <FIRECRAWL_API_KEY>"
+            }
+        }
+    }
+}
