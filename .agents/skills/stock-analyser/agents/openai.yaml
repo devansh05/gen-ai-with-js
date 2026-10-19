@@ -1,0 +1,9 @@
+interface:
+  display_name: "Indian Stock Analyser"
+  short_description: "Look up Indian stock daily price data"
+  default_prompt: "Use $stock-analyser to look up the latest daily price for RELIANCE.BSE."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "stock-analyser"
+      description: "Local MCP server exposing the stock-analyser tool"
